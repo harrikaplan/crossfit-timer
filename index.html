@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" id="meta-theme-color" content="#121212" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- Anti-FOUC: apply saved theme BEFORE CSS loads so there's no flash -->
+  <script>
+    (function () {
+      var t = localStorage.getItem('elite-timer-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    }());
+  </script>
+  <title>CrossFit Timer — Elite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- BACKGROUND GRID -->
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <!-- APP SHELL -->
+  <div class="app" id="app">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">ELITE<span class="logo-accent">TIMER</span></span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-wod-lib" id="btn-wod" aria-label="Open WOD Library">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          WOD
+        </button>
+        <button class="btn-icon" id="btn-settings" aria-label="Open settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- MODE SELECTOR -->
+    <nav class="mode-selector" role="tablist" aria-label="Timer Mode">
+      <button class="mode-btn active" role="tab" aria-selected="true"  data-mode="amrap">AMRAP</button>
+      <button class="mode-btn"        role="tab" aria-selected="false" data-mode="emom">EMOM</button>
+      <button class="mode-btn"        role="tab" aria-selected="false" data-mode="tabata">TABATA</button>
+      <button class="mode-btn"        role="tab" aria-selected="false" data-mode="custom">CUSTOM</button>
+    </nav>
+
+    <!-- WOD BANNER — revealed when a WOD preset is active -->
+    <div class="wod-banner hidden" id="wod-banner" role="status" aria-live="polite">
+      <div class="wod-banner-info">
+        <span class="wod-banner-name" id="wod-banner-name">Fran</span>
+        <span class="wod-badge"       id="wod-banner-type">FOR TIME</span>
+        <span class="wod-banner-cap"  id="wod-banner-cap"></span>
+      </div>
+      <button class="btn-icon btn-icon--sm" id="btn-wod-info" aria-label="View WOD details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- MAIN DISPLAY — giant clock -->
+    <main class="main-display" id="main-display">
+      <div class="phase-label" id="phase-label"><span id="phase-text">READY</span></div>
+      <div class="clock-wrapper" id="clock-wrapper">
+        <div class="clock" id="clock" aria-live="polite" aria-atomic="true">
+          <span id="clock-minutes">00</span>
+          <span class="clock-colon" id="clock-colon">:</span>
+          <span id="clock-seconds">00</span>
+        </div>
+        <div class="clock-ms" id="clock-ms">00</div>
+      </div>
+      <svg class="progress-ring" id="progress-ring" viewBox="0 0 340 340" aria-hidden="true">
+        <circle class="progress-ring__track" cx="170" cy="170" r="158"/>
+        <circle class="progress-ring__fill"  id="progress-fill" cx="170" cy="170" r="158"/>
+      </svg>
+    </main>
+
+    <!-- ROUND BAR — persistent stats strip -->
+    <section class="round-bar" aria-label="Round information">
+      <div class="round-stat">
+        <span class="round-stat__label" id="stat-label-round">ROUND</span>
+        <span class="round-stat__value" id="stat-round">—</span>
+      </div>
+      <div class="round-stat round-stat--center">
+        <span class="round-stat__label" id="stat-label-total">TOTAL</span>
+        <span class="round-stat__value" id="stat-total">—</span>
+      </div>
+      <div class="round-stat round-stat--right">
+        <span class="round-stat__label" id="stat-label-elapsed">ELAPSED</span>
+        <span class="round-stat__value" id="stat-elapsed">0:00</span>
+      </div>
+    </section>
+
+    <!-- CONTROLS — thumb zone -->
+    <section class="controls" aria-label="Timer controls">
+      <button class="btn-ctrl btn-ctrl--secondary" id="btn-reset" aria-label="Reset timer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
+        </svg>
+      </button>
+      <button class="btn-ctrl btn-ctrl--primary" id="btn-start" aria-label="Start timer">
+        <svg class="icon-play"          width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg class="icon-pause hidden"  width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button class="btn-ctrl btn-ctrl--secondary" id="btn-skip" aria-label="Skip phase">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
+    </section>
+
+  </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════
+       SETTINGS DRAWER (z-index 100)
+       ═══════════════════════════════════════════════ -->
+  <aside class="settings-drawer" id="settings-drawer" aria-label="Timer settings" aria-hidden="true">
+    <div class="settings-overlay" id="settings-overlay"></div>
+    <div class="settings-panel">
+
+      <div class="settings-header">
+        <h2 class="settings-title">Settings</h2>
+        <button class="btn-icon" id="btn-close-settings" aria-label="Close settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settings-body">
+
+        <!-- AMRAP -->
+        <div class="settings-section" id="settings-amrap">
+          <h3 class="settings-section-title">AMRAP</h3>
+          <div class="field-group">
+            <label class="field-label">Duration</label>
+            <div class="time-input-row">
+              <input class="time-input" id="amrap-min" type="number" min="0" max="99" value="20" aria-label="Minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="amrap-sec" type="number" min="0" max="59" value="0" aria-label="Seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMOM -->
+        <div class="settings-section hidden" id="settings-emom">
+          <h3 class="settings-section-title">EMOM</h3>
+          <div class="field-group">
+            <label class="field-label">Interval</label>
+            <div class="time-input-row">
+              <input class="time-input" id="emom-interval-min" type="number" min="0" max="10" value="1" aria-label="Minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="emom-interval-sec" type="number" min="0" max="59" value="0" aria-label="Seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="emom-rounds">Rounds</label>
+            <input class="time-input" id="emom-rounds" type="number" min="1" max="99" value="10" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- TABATA -->
+        <div class="settings-section hidden" id="settings-tabata">
+          <h3 class="settings-section-title">TABATA</h3>
+          <div class="field-group">
+            <label class="field-label">Work</label>
+            <div class="time-input-row">
+              <input class="time-input" id="tabata-work" type="number" min="1" max="120" value="20" aria-label="Work seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Rest</label>
+            <div class="time-input-row">
+              <input class="time-input" id="tabata-rest" type="number" min="1" max="120" value="10" aria-label="Rest seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="tabata-rounds">Rounds</label>
+            <input class="time-input" id="tabata-rounds" type="number" min="1" max="99" value="8" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- CUSTOM INTERVAL -->
+        <div class="settings-section hidden" id="settings-custom">
+          <h3 class="settings-section-title">CUSTOM INTERVAL</h3>
+          <div class="field-group">
+            <label class="field-label">Work</label>
+            <div class="time-input-row">
+              <input class="time-input" id="custom-work-min" type="number" min="0" max="60" value="0" aria-label="Work minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="custom-work-sec" type="number" min="0" max="59" value="45" aria-label="Work seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Rest</label>
+            <div class="time-input-row">
+              <input class="time-input" id="custom-rest-min" type="number" min="0" max="60" value="0" aria-label="Rest minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="custom-rest-sec" type="number" min="0" max="59" value="15" aria-label="Rest seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="custom-rounds">Rounds</label>
+            <input class="time-input" id="custom-rounds" type="number" min="1" max="99" value="10" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- GENERAL (with theme switcher) -->
+        <div class="settings-section settings-section--global">
+          <h3 class="settings-section-title">GENERAL</h3>
+
+          <div class="field-group field-group--row">
+            <label class="field-label" for="countdown-duration">Countdown (sec)</label>
+            <input class="time-input" id="countdown-duration" type="number" min="3" max="30" value="10" style="width:72px"/>
+          </div>
+
+          <div class="field-group field-group--row">
+            <span class="field-label">Sound</span>
+            <button class="toggle-btn active" id="toggle-sound" role="switch" aria-checked="true"><span class="toggle-knob"></span></button>
+          </div>
+
+          <div class="field-group field-group--row">
+            <span class="field-label">Show ms</span>
+            <button class="toggle-btn active" id="toggle-ms" role="switch" aria-checked="true"><span class="toggle-knob"></span></button>
+          </div>
+
+          <!-- ─── Theme Switcher ─── -->
+          <div class="field-group field-group--row">
+            <span class="field-label">Theme</span>
+            <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Color theme">
+              <button class="theme-opt active" id="btn-theme-dark" data-theme="dark" aria-pressed="true" aria-label="Dark mode">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                DARK
+              </button>
+              <button class="theme-opt" id="btn-theme-light" data-theme="light" aria-pressed="false" aria-label="Light mode">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                LIGHT
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /GENERAL -->
+
+      </div><!-- /settings-body -->
+
+      <div class="settings-footer">
+        <button class="btn-apply" id="btn-apply-settings">Apply & Close</button>
+      </div>
+
+    </div><!-- /settings-panel -->
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════
+       WOD PICKER DRAWER — bottom sheet (z-index 150)
+       ═══════════════════════════════════════════════ -->
+  <div class="wod-drawer" id="wod-drawer" aria-hidden="true" aria-label="WOD Library">
+    <div class="wod-overlay" id="wod-overlay"></div>
+    <div class="wod-panel">
+      <div class="drawer-handle" aria-hidden="true"></div>
+
+      <div class="wod-search-row">
+        <label class="wod-search-label" for="wod-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input class="wod-search-input" id="wod-search" type="search"
+                 placeholder="Search 60+ WODs..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+        </label>
+        <button class="btn-icon" id="btn-wod-close" aria-label="Close WOD Library">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Category filters — now includes MINE for custom WODs -->
+      <div class="wod-cats" role="group" aria-label="Filter by category">
+        <button class="wod-cat active" data-cat="all">ALL</button>
+        <button class="wod-cat" data-cat="girl">GIRLS</button>
+        <button class="wod-cat" data-cat="hero">HEROES</button>
+        <button class="wod-cat" data-cat="benchmark">BENCHMARK</button>
+        <button class="wod-cat" data-cat="custom">MINE</button>
+      </div>
+
+      <ul class="wod-list" id="wod-list" role="listbox" aria-label="Select a WOD"></ul>
+
+      <!-- Footer with CREATE WOD button -->
+      <div class="wod-picker-footer">
+        <button class="btn-create-wod" id="btn-create-wod" aria-label="Create a custom WOD">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          CREATE WOD
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       WOD INFO DRAWER — bottom sheet (z-index 160)
+       ═══════════════════════════════════════════════ -->
+  <div class="wod-info-drawer" id="wod-info-drawer" aria-hidden="true">
+    <div class="wod-info-overlay" id="wod-info-overlay"></div>
+    <div class="wod-info-panel">
+      <div class="drawer-handle" aria-hidden="true"></div>
+
+      <div class="wod-info-header">
+        <div class="wod-info-title-group">
+          <h2 class="wod-info-name" id="wod-info-name">Fran</h2>
+          <div class="wod-info-meta-row">
+            <span class="wod-badge" id="wod-info-badge">FOR TIME</span>
+            <span class="wod-info-cap" id="wod-info-cap"></span>
+          </div>
+        </div>
+        <button class="btn-icon" id="btn-wod-info-close" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <pre class="wod-description" id="wod-info-description"></pre>
+
+      <div class="wod-info-footer">
+        <button class="btn-apply" id="btn-wod-use">USE THIS WOD</button>
+        <!-- Delete button — only visible for user-created WODs -->
+        <button class="btn-delete-wod hidden" id="btn-delete-wod" aria-label="Delete this custom WOD">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          DELETE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       WOD CREATE DRAWER — bottom sheet (z-index 170)
+       ═══════════════════════════════════════════════ -->
+  <div class="wod-create-drawer" id="wod-create-drawer" aria-hidden="true" aria-label="Create custom WOD">
+    <div class="wod-create-overlay" id="wod-create-overlay"></div>
+    <div class="wod-create-panel">
+      <div class="drawer-handle" aria-hidden="true"></div>
+
+      <div class="wod-create-header">
+        <h2 class="settings-title">Create WOD</h2>
+        <button class="btn-icon" id="btn-create-close" aria-label="Cancel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="wod-create-body">
+
+        <!-- Name -->
+        <div class="field-group">
+          <label class="field-label" for="create-name">WOD Name <span class="required-star">*</span></label>
+          <input class="create-input" id="create-name" type="text"
+                 placeholder="e.g. Saturday Grinder" maxlength="40" autocomplete="off"/>
+        </div>
+
+        <!-- Type -->
+        <div class="field-group">
+          <label class="field-label" for="create-type">Type</label>
+          <select class="create-select" id="create-type" aria-label="WOD type">
+            <option value="fortime">For Time</option>
+            <option value="amrap">AMRAP</option>
+            <option value="emom">EMOM</option>
+            <option value="tabata">Tabata</option>
+            <option value="custom">Custom Interval</option>
+          </select>
+        </div>
+
+        <!-- ── For Time config ── -->
+        <div class="create-config-block" id="create-config-fortime">
+          <div class="field-group">
+            <label class="field-label">Time Cap (0 = no cap)</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-cap-min" type="number" min="0" max="99" value="0" aria-label="Time cap minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="create-cap-sec" type="number" min="0" max="59" value="0" aria-label="Time cap seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── AMRAP config ── -->
+        <div class="create-config-block hidden" id="create-config-amrap">
+          <div class="field-group">
+            <label class="field-label">Duration <span class="required-star">*</span></label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-amrap-min" type="number" min="0" max="99" value="20" aria-label="AMRAP minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="create-amrap-sec" type="number" min="0" max="59" value="0" aria-label="AMRAP seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── EMOM config ── -->
+        <div class="create-config-block hidden" id="create-config-emom">
+          <div class="field-group">
+            <label class="field-label">Interval</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-emom-min" type="number" min="0" max="10" value="1" aria-label="Interval minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="create-emom-sec" type="number" min="0" max="59" value="0" aria-label="Interval seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="create-emom-rounds">Rounds</label>
+            <input class="time-input" id="create-emom-rounds" type="number" min="1" max="99" value="10" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- ── Tabata config ── -->
+        <div class="create-config-block hidden" id="create-config-tabata">
+          <div class="field-group">
+            <label class="field-label">Work</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-tabata-work" type="number" min="1" max="120" value="20" aria-label="Work seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Rest</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-tabata-rest" type="number" min="1" max="120" value="10" aria-label="Rest seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="create-tabata-rounds">Rounds</label>
+            <input class="time-input" id="create-tabata-rounds" type="number" min="1" max="99" value="8" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- ── Custom Interval config ── -->
+        <div class="create-config-block hidden" id="create-config-custom">
+          <div class="field-group">
+            <label class="field-label">Work</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-work-min" type="number" min="0" max="60" value="0" aria-label="Work minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="create-work-sec" type="number" min="0" max="59" value="45" aria-label="Work seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Rest</label>
+            <div class="time-input-row">
+              <input class="time-input" id="create-rest-min" type="number" min="0" max="60" value="0" aria-label="Rest minutes"/>
+              <span class="time-sep">min</span>
+              <input class="time-input" id="create-rest-sec" type="number" min="0" max="59" value="15" aria-label="Rest seconds"/>
+              <span class="time-sep">sec</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="create-custom-rounds">Rounds</label>
+            <input class="time-input" id="create-custom-rounds" type="number" min="1" max="99" value="10" style="width:72px"/>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label class="field-label" for="create-description">Movements & Notes</label>
+          <textarea class="create-textarea" id="create-description"
+                    placeholder="Describe the movements, reps, loads…&#10;e.g. 3 rounds:&#10;• 10 Thrusters (95/65 lb)&#10;• 15 Pull-ups"
+                    rows="5" maxlength="600"></textarea>
+        </div>
+
+        <!-- Inline validation message -->
+        <p class="create-error" id="create-error" role="alert" aria-live="polite"></p>
+
+      </div><!-- /wod-create-body -->
+
+      <div class="wod-create-footer">
+        <button class="btn-apply" id="btn-save-wod">SAVE WOD</button>
+      </div>
+
+    </div><!-- /wod-create-panel -->
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       FINISHED OVERLAY (z-index 200)
+       ═══════════════════════════════════════════════ -->
+  <div class="finished-overlay hidden" id="finished-overlay" role="dialog" aria-modal="true" aria-label="Workout complete">
+    <div class="finished-card">
+      <div class="finished-icon">🏆</div>
+      <h2 class="finished-title">WORKOUT COMPLETE</h2>
+      <div class="finished-stats">
+        <div class="finished-stat">
+          <span class="finished-stat__label" id="finished-label-rounds">ROUNDS</span>
+          <span class="finished-stat__value"  id="finished-rounds">—</span>
+        </div>
+        <div class="finished-stat">
+          <span class="finished-stat__label">TOTAL TIME</span>
+          <span class="finished-stat__value"  id="finished-time">—</span>
+        </div>
+      </div>
+      <button class="btn-apply" id="btn-finished-close">START AGAIN</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
