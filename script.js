@@ -756,7 +756,9 @@ function tick(now) {
 
   const elapsed = timer.pausedElapsed + (now - timer.startTs);
   timer.phaseElapsedMs   = elapsed;
-  timer.workoutElapsedMs = performance.now() - timer.workoutStartTs;
+  timer.workoutElapsedMs = timer.state === STATE.COUNTDOWN
+    ? 0
+    : performance.now() - timer.workoutStartTs;
 
   switch (timer.state) {
     case STATE.COUNTDOWN: tickCountdown(elapsed); break;
@@ -888,6 +890,12 @@ function transitionToWorking() {
 
 function startWorkPhase() {
   const m = settings.mode;
+
+  // Reset elapsed the moment the first working phase begins (not during countdown)
+  if (timer.state === STATE.COUNTDOWN) {
+    timer.workoutStartTs   = performance.now();
+    timer.workoutElapsedMs = 0;
+  }
 
   if (m === 'amrap') {
     timer.phaseDurationMs = settings.amrap.totalMs;

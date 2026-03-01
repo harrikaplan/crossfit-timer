@@ -318,6 +318,17 @@ body {
   animation: colon-blink 1s step-start infinite;
   padding: 0 3px;
   transform: translateY(-4px);
+  /* Override inherited transparent from parent gradient text */
+  -webkit-text-fill-color: rgba(255,255,255,0.72);
+  color: rgba(255,255,255,0.72);
+}
+[data-theme="light"] .clock-colon {
+  -webkit-text-fill-color: rgba(20,20,20,0.65);
+  color: rgba(20,20,20,0.65);
+}
+.clock.heartbeat .clock-colon {
+  -webkit-text-fill-color: var(--clr-state);
+  color: var(--clr-state);
 }
 @keyframes colon-blink {
   0%, 100% { opacity: 1; }
@@ -1132,21 +1143,6 @@ body[data-state="resting"] .mode-selector {
   opacity: 0.38;
 }
 
-/* ── Rotate hint — portrait only ────────────────────────────── */
-.rotate-hint {
-  position: absolute;
-  bottom: var(--sp-4);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex; align-items: center; gap: 6px;
-  color: var(--clr-muted);
-  font-family: var(--font-mono); font-size: 0.55rem;
-  font-weight: 600; letter-spacing: 0.12em;
-  opacity: 0.45;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
 /* ── Landscape FABs — hidden by default (portrait) ──────────── */
 .landscape-fabs { display: none; }
 
@@ -1272,8 +1268,6 @@ body[data-state="resting"] .mode-selector {
     box-shadow: 0 0 24px var(--clr-go-glow);
   }
 
-  /* Landscape — hide rotate hint */
-  .rotate-hint { display: none !important; }
 }
 
 /* ── Tablet / desktop — modest enhancements ─────────────────── */
