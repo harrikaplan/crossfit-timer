@@ -85,6 +85,15 @@
         <circle class="progress-ring__track" cx="170" cy="170" r="158"/>
         <circle class="progress-ring__fill"  id="progress-fill" cx="170" cy="170" r="158"/>
       </svg>
+
+      <!-- Portrait-only hint — CSS hides it in landscape -->
+      <div class="rotate-hint" aria-hidden="true">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="16" height="10" rx="2"/>
+          <line x1="14" y1="1" x2="14" y2="11"/>
+        </svg>
+        ROTATE FOR FULL-SCREEN TIMER
+      </div>
     </main>
 
     <!-- ROUND BAR — persistent stats strip -->
@@ -122,6 +131,22 @@
     </section>
 
   </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════
+       LANDSCAPE FABS — visible only when rotated
+       CSS (.landscape-fabs) hides in portrait
+       ═══════════════════════════════════════════════ -->
+  <div class="landscape-fabs">
+    <button class="landscape-fab landscape-fab--reset" id="ls-btn-reset" aria-label="Reset timer">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
+      </svg>
+    </button>
+    <button class="landscape-fab landscape-fab--start" id="ls-btn-start" aria-label="Play / Pause timer">
+      <svg class="icon-play-ls"  width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <svg class="icon-pause-ls hidden" width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+  </div>
 
   <!-- ═══════════════════════════════════════════════
        SETTINGS DRAWER (z-index 100)

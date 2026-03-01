@@ -629,6 +629,12 @@ const dom = {
 
   /* wake lock indicator */
   wakelockDot: document.querySelector('.wakelock-dot'),
+
+  /* landscape FABs */
+  lsBtnReset:  $('ls-btn-reset'),
+  lsBtnStart:  $('ls-btn-start'),
+  lsIconPlay:  document.querySelector('.icon-play-ls'),
+  lsIconPause: document.querySelector('.icon-pause-ls'),
 };
 
 /* ============================================================
@@ -675,6 +681,8 @@ function setPhaseLabel(text) { dom.phaseText.textContent = text; }
 function setPlayPauseIcon(playing) {
   dom.iconPlay.classList.toggle('hidden', playing);
   dom.iconPause.classList.toggle('hidden', !playing);
+  dom.lsIconPlay?.classList.toggle('hidden', playing);
+  dom.lsIconPause?.classList.toggle('hidden', !playing);
 }
 
 function updateStatBar() {
@@ -1130,6 +1138,10 @@ dom.toggleMs.addEventListener('click', () => {
   dom.toggleMs.setAttribute('aria-checked', settings.showMs);
   dom.clockMs.classList.toggle('hidden', !settings.showMs);
 });
+
+/* ── Landscape FABs ─────────────────────────────────────────── */
+dom.lsBtnReset?.addEventListener('click', () => dom.btnReset.click());
+dom.lsBtnStart?.addEventListener('click', () => dom.btnStart.click());
 
 /* ── Theme switcher ─────────────────────────────────────────── */
 dom.btnThemeDark?.addEventListener('click',  () => applyTheme('dark'));
